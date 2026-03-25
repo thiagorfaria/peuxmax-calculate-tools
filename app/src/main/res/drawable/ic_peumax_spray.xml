@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="150dp"
+    android:viewportWidth="200"
+    android:viewportHeight="150">
+
+    <!-- Spray fan fill -->
+    <path
+        android:fillColor="#0097A7"
+        android:pathData="M 100,28 L 5,142 L 195,142 Z" />
+
+    <!-- Dividing rays (white lines separating the fan sections) -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:pathData="M 100,28 L 37,142" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:pathData="M 100,28 L 68,142" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:pathData="M 100,28 L 100,142" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:pathData="M 100,28 L 132,142" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:pathData="M 100,28 L 163,142" />
+
+    <!-- Nozzle hex nut -->
+    <path
+        android:fillColor="#CFD8DC"
+        android:pathData="M 87,0 L 113,0 L 120,8 L 113,15 L 87,15 L 80,8 Z" />
+
+    <!-- Nozzle threaded barrel -->
+    <path
+        android:fillColor="#B0BEC5"
+        android:pathData="M 91,15 L 109,15 L 109,28 L 91,28 Z" />
+
+    <!-- Thread lines on barrel -->
+    <path
+        android:strokeColor="#78909C"
+        android:strokeWidth="1.5"
+        android:pathData="M 91,18 L 109,18" />
+    <path
+        android:strokeColor="#78909C"
+        android:strokeWidth="1.5"
+        android:pathData="M 91,21 L 109,21" />
+    <path
+        android:strokeColor="#78909C"
+        android:strokeWidth="1.5"
+        android:pathData="M 91,24 L 109,24" />
+
+</vector>
