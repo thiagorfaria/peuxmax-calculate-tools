@@ -39,6 +39,10 @@ class CalculatorViewModel @Inject constructor(
         recalculate()
     }
 
+    fun clearInputs() {
+        _uiState.update { CalculatorUiState() }
+    }
+
     private fun recalculate() {
         val state = _uiState.value
         val top = state.topDiameter.toDoubleOrNull()

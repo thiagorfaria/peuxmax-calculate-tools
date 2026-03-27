@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.OutlinedTextField
@@ -65,7 +67,8 @@ fun CalculatorScreen(viewModel: CalculatorViewModel = hiltViewModel()) {
                 height = uiState.height,
                 onTopDiameterChange = viewModel::onTopDiameterChange,
                 onBottomDiameterChange = viewModel::onBottomDiameterChange,
-                onHeightChange = viewModel::onHeightChange
+                onHeightChange = viewModel::onHeightChange,
+                onClear = viewModel::clearInputs
             )
         }
     }
@@ -217,7 +220,8 @@ private fun InputSection(
     height: String,
     onTopDiameterChange: (String) -> Unit,
     onBottomDiameterChange: (String) -> Unit,
-    onHeightChange: (String) -> Unit
+    onHeightChange: (String) -> Unit,
+    onClear: () -> Unit
 ) {
     val fieldColors = OutlinedTextFieldDefaults.colors(
         focusedBorderColor = Color(0xFF1565C0),
@@ -247,6 +251,18 @@ private fun InputSection(
         onValueChange = onBottomDiameterChange,
         colors = fieldColors
     )
+    Button(
+        onClick = onClear,
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D2B6E))
+    ) {
+        Text(
+            text = "Limpar",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold
+        )
+    }
 }
 
 @Composable
