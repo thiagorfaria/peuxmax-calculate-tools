@@ -5,6 +5,27 @@ Claude must follow these rules in every conversation and every code change.
 
 ---
 
+## Start of Every Session
+
+Before writing any code, always run:
+
+```bash
+git fetch origin
+git status
+git log origin/main..HEAD --oneline   # commits we have that remote doesn't
+git log HEAD..origin/main --oneline   # commits remote has that we don't
+```
+
+If the remote is ahead, pull and rebase before starting:
+
+```bash
+git pull --rebase origin main
+```
+
+This prevents merge conflicts caused by work done outside this session.
+
+---
+
 ## Development Philosophy
 
 - **Baby steps**: Never implement everything at once. Break work into small, focused increments.
