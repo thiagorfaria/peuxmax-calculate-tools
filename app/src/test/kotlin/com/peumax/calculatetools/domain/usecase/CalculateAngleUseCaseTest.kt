@@ -1,20 +1,21 @@
 package com.peumax.calculatetools.domain.usecase
 
-import org.junit.Assert.assertEquals
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 class CalculateAngleUseCaseTest {
 
     private lateinit var useCase: CalculateAngleUseCase
 
-    @Before
+    @BeforeEach
     fun setUp() {
         useCase = CalculateAngleUseCase()
     }
 
     @Test
-    fun `given top=10 bottom=60 height=30, result should be 39_81 degrees`() {
+    fun `given top=10 bottom=60 height=30, result should be approximately 39_81 degrees`() {
         val result = useCase.execute(
             topDiameter = 10.0,
             bottomDiameter = 60.0,
@@ -40,6 +41,6 @@ class CalculateAngleUseCaseTest {
             bottomDiameter = 50.0,
             height = 40.0
         )
-        assert(result > 0.0)
+        assertTrue(result > 0.0)
     }
 }

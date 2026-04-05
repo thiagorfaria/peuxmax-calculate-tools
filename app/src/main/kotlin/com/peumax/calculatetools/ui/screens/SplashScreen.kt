@@ -17,6 +17,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import com.peumax.calculatetools.ui.theme.PeumaxBlue
+import com.peumax.calculatetools.ui.theme.PeumaxNavy
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -38,9 +40,9 @@ fun SplashScreen(onNavigateToCalculator: () -> Unit) {
             .background(
                 Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFF0D2B6E),
-                        Color(0xFF1565C0),
-                        Color(0xFF0D2B6E)
+                        PeumaxNavy,
+                        PeumaxBlue,
+                        PeumaxNavy
                     )
                 )
             ),

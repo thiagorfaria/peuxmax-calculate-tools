@@ -12,6 +12,11 @@ import com.peumax.calculatetools.ui.screens.SplashScreen
 import com.peumax.calculatetools.ui.theme.PeumaxTheme
 import dagger.hilt.android.AndroidEntryPoint
 
+sealed class Route(val path: String) {
+    data object Splash : Route("splash")
+    data object Calculator : Route("calculator")
+}
+
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
@@ -23,18 +28,18 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 NavHost(
                     navController = navController,
-                    startDestination = "splash"
+                    startDestination = Route.Splash.path
                 ) {
-                    composable("splash") {
+                    composable(Route.Splash.path) {
                         SplashScreen(
                             onNavigateToCalculator = {
-                                navController.navigate("calculator") {
-                                    popUpTo("splash") { inclusive = true }
+                                navController.navigate(Route.Calculator.path) {
+                                    popUpTo(Route.Splash.path) { inclusive = true }
                                 }
                             }
                         )
                     }
-                    composable("calculator") {
+                    composable(Route.Calculator.path) {
                         CalculatorScreen()
                     }
                 }

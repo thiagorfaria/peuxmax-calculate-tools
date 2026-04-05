@@ -9,51 +9,59 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
-data class CalculatorUiState(
-    val topDiameter: String = "",
-    val bottomDiameter: String = "",
-    val height: String = "",
-    val result: String = ""
-)
+sealed class CalculatorUiState {
+    data class Filled(
+        val topDiameter: String = "",
+        val bottomDiameter: String = "",
+        val height: String = "",
+        val result: String = ""
+    ) : CalculatorUiState()
+}
 
 @HiltViewModel
 class CalculatorViewModel @Inject constructor(
     private val calculateAngleUseCase: CalculateAngleUseCase
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(CalculatorUiState())
+    private val _uiState = MutableStateFlow<CalculatorUiState>(CalculatorUiState.Filled())
     val uiState: StateFlow<CalculatorUiState> = _uiState.asStateFlow()
 
     fun onTopDiameterChange(value: String) {
-        _uiState.update { it.copy(topDiameter = value) }
+        updateFilled { it.copy(topDiameter = value) }
         recalculate()
     }
 
     fun onBottomDiameterChange(value: String) {
-        _uiState.update { it.copy(bottomDiameter = value) }
+        updateFilled { it.copy(bottomDiameter = value) }
         recalculate()
     }
 
     fun onHeightChange(value: String) {
-        _uiState.update { it.copy(height = value) }
+        updateFilled { it.copy(height = value) }
         recalculate()
     }
 
     fun clearInputs() {
-        _uiState.update { CalculatorUiState() }
+        _uiState.update { CalculatorUiState.Filled() }
+    }
+
+    private fun updateFilled(transform: (CalculatorUiState.Filled) -> CalculatorUiState.Filled) {
+        _uiState.update { current ->
+            if (current is CalculatorUiState.Filled) transform(current) else current
+        }
     }
 
     private fun recalculate() {
-        val state = _uiState.value
-        val top = state.topDiameter.toDoubleOrNull()
-        val bottom = state.bottomDiameter.toDoubleOrNull()
-        val height = state.height.toDoubleOrNull()
+        val current = _uiState.value as? CalculatorUiState.Filled ?: return
+        val top = current.topDiameter.toDoubleOrNull()
+        val bottom = current.bottomDiameter.toDoubleOrNull()
+        val height = current.height.toDoubleOrNull()
 
-        if (top != null && bottom != null && height != null && height > 0) {
+        if (top != null && top > 0 && bottom != null && bottom > 0 && height != null && height > 0) {
             val angle = calculateAngleUseCase.execute(top, bottom, height)
-            _uiState.update { it.copy(result = "%.2f".format(angle)) }
+            _uiState.update { (it as? CalculatorUiState.Filled)?.copy(result = "%.2f".format(angle)) ?: it }
         } else {
-            _uiState.update { it.copy(result = "") }
+            _uiState.update { (it as? CalculatorUiState.Filled)?.copy(result = "") ?: it }
         }
     }
 }

@@ -1,6 +1,7 @@
 package com.peumax.calculatetools.ui.screens
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -9,43 +10,58 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.peumax.calculatetools.ui.components.ClearButton
+import com.peumax.calculatetools.ui.components.DimensionField
+import com.peumax.calculatetools.ui.theme.BackgroundLight
+import com.peumax.calculatetools.ui.theme.ConeTeal
+import com.peumax.calculatetools.ui.theme.DiagramDim
+import com.peumax.calculatetools.ui.theme.DiagramLabel
+import com.peumax.calculatetools.ui.theme.PeumaxBlue
+import com.peumax.calculatetools.ui.theme.PeumaxNavy
+import com.peumax.calculatetools.ui.theme.TextPrimary
+import com.peumax.calculatetools.viewmodel.CalculatorUiState
 import com.peumax.calculatetools.viewmodel.CalculatorViewModel
 
 @Composable
 fun CalculatorScreen(viewModel: CalculatorViewModel = hiltViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val state = uiState as? CalculatorUiState.Filled ?: CalculatorUiState.Filled()
+
+    val d1FocusRequester = remember { FocusRequester() }
+    val hFocusRequester = remember { FocusRequester() }
+    val d2FocusRequester = remember { FocusRequester() }
 
     Scaffold(
-        containerColor = Color(0xFFF5F7FA)
+        containerColor = BackgroundLight
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -54,22 +70,31 @@ fun CalculatorScreen(viewModel: CalculatorViewModel = hiltViewModel()) {
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            ResultCard(result = uiState.result)
+            ResultCard(result = state.result)
             ConeDiagramCard(
                 modifier = Modifier.weight(1f).fillMaxWidth(),
-                topDiameter = uiState.topDiameter,
-                bottomDiameter = uiState.bottomDiameter,
-                height = uiState.height
+                topDiameter = state.topDiameter,
+                bottomDiameter = state.bottomDiameter,
+                height = state.height,
+                onD1Click = { d1FocusRequester.requestFocus() },
+                onHClick = { hFocusRequester.requestFocus() },
+                onD2Click = { d2FocusRequester.requestFocus() }
             )
             InputSection(
-                topDiameter = uiState.topDiameter,
-                bottomDiameter = uiState.bottomDiameter,
-                height = uiState.height,
+                topDiameter = state.topDiameter,
+                bottomDiameter = state.bottomDiameter,
+                height = state.height,
                 onTopDiameterChange = viewModel::onTopDiameterChange,
                 onBottomDiameterChange = viewModel::onBottomDiameterChange,
                 onHeightChange = viewModel::onHeightChange,
-                onClear = viewModel::clearInputs
+                d1FocusRequester = d1FocusRequester,
+                hFocusRequester = hFocusRequester,
+                d2FocusRequester = d2FocusRequester
             )
+            ClearButton(onClick = {
+                viewModel.clearInputs()
+                d1FocusRequester.requestFocus()
+            })
         }
     }
 }
@@ -79,7 +104,7 @@ private fun ResultCard(result: String) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF0D2B6E))
+        colors = CardDefaults.cardColors(containerColor = PeumaxNavy)
     ) {
         Column(
             modifier = Modifier
@@ -125,7 +150,10 @@ private fun ConeDiagramCard(
     modifier: Modifier = Modifier,
     topDiameter: String = "",
     bottomDiameter: String = "",
-    height: String = ""
+    height: String = "",
+    onD1Click: () -> Unit = {},
+    onHClick: () -> Unit = {},
+    onD2Click: () -> Unit = {}
 ) {
     Card(
         modifier = modifier,
@@ -138,7 +166,10 @@ private fun ConeDiagramCard(
                 .padding(horizontal = 24.dp, vertical = 16.dp),
             topDiameter = topDiameter,
             bottomDiameter = bottomDiameter,
-            height = height
+            height = height,
+            onD1Click = onD1Click,
+            onHClick = onHClick,
+            onD2Click = onD2Click
         )
     }
 }
@@ -148,19 +179,68 @@ private fun ConeDiagram(
     modifier: Modifier = Modifier,
     topDiameter: String = "",
     bottomDiameter: String = "",
-    height: String = ""
+    height: String = "",
+    onD1Click: () -> Unit = {},
+    onHClick: () -> Unit = {},
+    onD2Click: () -> Unit = {}
 ) {
     val textMeasurer = rememberTextMeasurer()
-    val teal = Color(0xFF0097A7)
-    val dimColor = Color(0xFF90A4AE)
+    val teal = ConeTeal
+    val dimColor = DiagramDim
     val labelStyle = TextStyle(
-        fontSize = 16.sp,
+        fontSize = 20.sp,
         fontWeight = FontWeight.SemiBold,
-        color = Color(0xFF546E7A)
+        color = DiagramLabel
     )
     val strokeWidth = 1.5f
 
-    Canvas(modifier = modifier) {
+    var canvasSize by remember { mutableStateOf(Size.Zero) }
+
+    Canvas(
+        modifier = modifier
+            .onSizeChanged { canvasSize = Size(it.width.toFloat(), it.height.toFloat()) }
+            .pointerInput(canvasSize) {
+                detectTapGestures { offset ->
+                    val w = canvasSize.width
+                    val h = canvasSize.height
+                    if (w == 0f || h == 0f) return@detectTapGestures
+
+                    val topWidth = w * 0.22f
+                    val bottomWidth = w * 0.70f
+                    val coneTop = h * 0.12f
+                    val coneBottom = h * 0.82f
+                    val cx = w / 2f
+                    val hX = cx + bottomWidth / 2 + 18f
+                    val hitPad = 48f
+
+                    val d1Area = Rect(
+                        left = cx - topWidth / 2 - hitPad,
+                        top = coneTop - 80f,
+                        right = cx + topWidth / 2 + hitPad,
+                        bottom = coneTop - 4f
+                    )
+                    val d2Area = Rect(
+                        left = cx - bottomWidth / 2,
+                        top = coneBottom + 8f,
+                        right = cx + bottomWidth / 2,
+                        bottom = coneBottom + 80f
+                    )
+                    val hMid = (coneTop + coneBottom) / 2f
+                    val hArea = Rect(
+                        left = hX,
+                        top = hMid - hitPad,
+                        right = hX + 120f,
+                        bottom = hMid + hitPad
+                    )
+
+                    when {
+                        d1Area.contains(offset) -> onD1Click()
+                        d2Area.contains(offset) -> onD2Click()
+                        hArea.contains(offset) -> onHClick()
+                    }
+                }
+            }
+    ) {
         val w = size.width
         val h = size.height
 
@@ -170,7 +250,6 @@ private fun ConeDiagram(
         val coneBottom = h * 0.82f
         val cx = w / 2f
 
-        // Cone trapezoid fill
         val conePath = Path().apply {
             moveTo(cx - topWidth / 2, coneTop)
             lineTo(cx + topWidth / 2, coneTop)
@@ -180,25 +259,21 @@ private fun ConeDiagram(
         }
         drawPath(conePath, color = teal)
 
-        // D1 dimension line (above top edge)
         val d1Y = coneTop - 10f
         drawLine(dimColor, Offset(cx - topWidth / 2, d1Y), Offset(cx + topWidth / 2, d1Y), strokeWidth)
         drawLine(dimColor, Offset(cx - topWidth / 2, d1Y - 4f), Offset(cx - topWidth / 2, d1Y + 4f), strokeWidth)
         drawLine(dimColor, Offset(cx + topWidth / 2, d1Y - 4f), Offset(cx + topWidth / 2, d1Y + 4f), strokeWidth)
 
-        // D2 dimension line (below bottom edge)
         val d2Y = coneBottom + 12f
         drawLine(dimColor, Offset(cx - bottomWidth / 2, d2Y), Offset(cx + bottomWidth / 2, d2Y), strokeWidth)
         drawLine(dimColor, Offset(cx - bottomWidth / 2, d2Y - 4f), Offset(cx - bottomWidth / 2, d2Y + 4f), strokeWidth)
         drawLine(dimColor, Offset(cx + bottomWidth / 2, d2Y - 4f), Offset(cx + bottomWidth / 2, d2Y + 4f), strokeWidth)
 
-        // H dimension line (right side)
         val hX = cx + bottomWidth / 2 + 18f
         drawLine(dimColor, Offset(hX, coneTop), Offset(hX, coneBottom), strokeWidth)
         drawLine(dimColor, Offset(hX - 4f, coneTop), Offset(hX + 4f, coneTop), strokeWidth)
         drawLine(dimColor, Offset(hX - 4f, coneBottom), Offset(hX + 4f, coneBottom), strokeWidth)
 
-        // Labels
         val d1Label = if (topDiameter.isNotEmpty()) "${topDiameter}mm" else "D1"
         val d1Text = textMeasurer.measure(d1Label, labelStyle)
         drawText(d1Text, topLeft = Offset(cx - d1Text.size.width / 2f, d1Y - d1Text.size.height - 2f))
@@ -221,13 +296,15 @@ private fun InputSection(
     onTopDiameterChange: (String) -> Unit,
     onBottomDiameterChange: (String) -> Unit,
     onHeightChange: (String) -> Unit,
-    onClear: () -> Unit
+    d1FocusRequester: FocusRequester,
+    hFocusRequester: FocusRequester,
+    d2FocusRequester: FocusRequester
 ) {
     val fieldColors = OutlinedTextFieldDefaults.colors(
-        focusedBorderColor = Color(0xFF1565C0),
-        cursorColor = Color(0xFF1565C0),
-        focusedTextColor = Color(0xFF1A1A1A),
-        unfocusedTextColor = Color(0xFF1A1A1A)
+        focusedBorderColor = PeumaxBlue,
+        cursorColor = PeumaxBlue,
+        focusedTextColor = TextPrimary,
+        unfocusedTextColor = TextPrimary
     )
 
     DimensionField(
@@ -235,67 +312,23 @@ private fun InputSection(
         label = "Diâmetro Superior",
         value = topDiameter,
         onValueChange = onTopDiameterChange,
-        colors = fieldColors
+        colors = fieldColors,
+        focusRequester = d1FocusRequester
     )
     DimensionField(
         shortLabel = "H",
         label = "Altura",
         value = height,
         onValueChange = onHeightChange,
-        colors = fieldColors
+        colors = fieldColors,
+        focusRequester = hFocusRequester
     )
     DimensionField(
         shortLabel = "D2",
         label = "Diâmetro Inferior",
         value = bottomDiameter,
         onValueChange = onBottomDiameterChange,
-        colors = fieldColors
+        colors = fieldColors,
+        focusRequester = d2FocusRequester
     )
-    Button(
-        onClick = onClear,
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D2B6E))
-    ) {
-        Text(
-            text = "Limpar",
-            fontSize = 16.sp,
-            fontWeight = FontWeight.SemiBold
-        )
-    }
-}
-
-@Composable
-private fun DimensionField(
-    shortLabel: String,
-    label: String,
-    value: String,
-    onValueChange: (String) -> Unit,
-    colors: TextFieldColors
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Text(
-            text = shortLabel,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF0D2B6E),
-            fontSize = 22.sp,
-            modifier = Modifier.width(40.dp)
-        )
-        OutlinedTextField(
-            value = value,
-            onValueChange = onValueChange,
-            label = { Text(label, fontSize = 20.sp, color = Color(0xFF1A1A1A)) },
-            modifier = Modifier.weight(1f),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-            singleLine = true,
-            shape = RoundedCornerShape(12.dp),
-            colors = colors,
-            textStyle = TextStyle(fontSize = 24.sp, textAlign = TextAlign.Start),
-            suffix = { Text("mm", color = Color(0xFF90A4AE), fontSize = 18.sp) }
-        )
-    }
 }

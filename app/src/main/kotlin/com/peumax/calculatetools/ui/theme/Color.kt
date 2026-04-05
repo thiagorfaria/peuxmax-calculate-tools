@@ -14,3 +14,7 @@ val SurfaceDark = Color(0xFF1E1E1E)
 
 val TextPrimary = Color(0xFF1A1A1A)
 val TextPrimaryDark = Color(0xFFFFFFFF)
+
+val ConeTeal = Color(0xFF0097A7)
+val DiagramDim = Color(0xFF90A4AE)
+val DiagramLabel = Color(0xFF546E7A)

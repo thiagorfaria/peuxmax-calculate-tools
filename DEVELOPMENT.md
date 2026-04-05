@@ -18,9 +18,10 @@ angle = atan((D2/2 - D1/2) / H)  →  converted to degrees, rounded to 2 decimal
 ```
 MVVM + Clean Architecture
 ├── domain/usecase/     CalculateAngleUseCase   (pure logic, no Android deps)
-├── domain/model/       ConeCalculation         (data class)
-├── viewmodel/          CalculatorViewModel     (StateFlow, Hilt)
-└── ui/screens/         SplashScreen, CalculatorScreen
+├── viewmodel/          CalculatorViewModel     (sealed UiState, StateFlow, Hilt)
+└── ui/
+    ├── screens/        SplashScreen, CalculatorScreen
+    └── components/     ClearButton, DimensionField
 ```
 
 Dependency injection with **Hilt**. Navigation with **NavHost** (splash is removed from backstack on navigate).
@@ -46,10 +47,23 @@ The logo asset was recreated as an Android Vector Drawable since no source file 
 
 ---
 
-## Known minor issues (not yet fixed)
+## Pending — next session
 
-- `ConeCalculation` model exists but is unused — was scaffolded for future use (e.g. history feature).
-- Navigation routes are plain strings (`"splash"`, `"calculator"`) — could be replaced with a sealed class to avoid typos if the app grows.
+### Naming convention review
+
+Current color and variable names in `Color.kt` lack a clear, consistent pattern and are hard to read at a glance. Examples:
+
+- `DiagramDim` — unclear what "Dim" means (dimension line? dimmed?)
+- `TextPrimary` — generic, doesn't communicate where or how it is used
+- `DiagramLabel` — mixes component context ("Diagram") with role ("Label")
+
+**Goal:** Define a naming pattern before adding more colors or variables. Options to discuss:
+
+- **Role-based**: `ColorTextBody`, `ColorBorderFocused`, `ColorSurfaceCard` — describes where the color is used
+- **Semantic**: `Navy`, `Blue`, `Teal`, `SlateGray` — describes the color itself, context comes from usage
+- **Hybrid** (recommended): brand colors keep semantic names (`PeumaxNavy`, `PeumaxBlue`), all others use role-based names (`ColorDiagramLine`, `ColorDiagramText`, `ColorInputText`)
+
+Apply the agreed pattern consistently across `Color.kt` and all references before adding new features.
 
 ---
 
