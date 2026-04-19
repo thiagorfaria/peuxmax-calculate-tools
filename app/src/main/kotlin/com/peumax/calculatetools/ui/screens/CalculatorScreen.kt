@@ -33,6 +33,8 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -44,6 +46,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlin.math.atan2
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.peumax.calculatetools.ui.components.ClearButton
@@ -92,6 +95,7 @@ fun CalculatorScreen(viewModel: CalculatorViewModel = hiltViewModel()) {
                 topDiameter = state.topDiameter,
                 bottomDiameter = state.bottomDiameter,
                 height = state.height,
+                result = state.result,
                 onD1Click = { d1FocusRequester.requestFocus() },
                 onHClick = { hFocusRequester.requestFocus() },
                 onD2Click = { d2FocusRequester.requestFocus() }
@@ -202,6 +206,7 @@ private fun ConeDiagramCard(
     topDiameter: String = "",
     bottomDiameter: String = "",
     height: String = "",
+    result: String = "",
     onD1Click: () -> Unit = {},
     onHClick: () -> Unit = {},
     onD2Click: () -> Unit = {}
@@ -218,6 +223,7 @@ private fun ConeDiagramCard(
             topDiameter = topDiameter,
             bottomDiameter = bottomDiameter,
             height = height,
+            result = result,
             onD1Click = onD1Click,
             onHClick = onHClick,
             onD2Click = onD2Click
@@ -231,6 +237,7 @@ private fun ConeDiagram(
     topDiameter: String = "",
     bottomDiameter: String = "",
     height: String = "",
+    result: String = "",
     onD1Click: () -> Unit = {},
     onHClick: () -> Unit = {},
     onD2Click: () -> Unit = {}
@@ -336,6 +343,75 @@ private fun ConeDiagram(
         val hLabel = if (height.isNotEmpty()) "${height}mm" else "H"
         val hText = textMeasurer.measure(hLabel, labelStyle)
         drawText(hText, topLeft = Offset(hX + 6f, (coneTop + coneBottom) / 2f - hText.size.height / 2f))
+
+        if (result.isNotEmpty()) {
+            // Arc indicators: show which angle the diagram represents.
+            // The app computes atan((r2-r1)/H) — the angle between the slant side and the
+            // vertical axis. Each arc spans from the vertical reference to the slant, drawn
+            // at both top corners so the user immediately sees where the angle is measured.
+            val slantDx = (bottomWidth - topWidth) / 2f
+            val slantDy = coneBottom - coneTop
+            val slantAngleDeg = Math.toDegrees(atan2(slantDy.toDouble(), slantDx.toDouble())).toFloat()
+            val arcSweep = 90f - slantAngleDeg
+            val arcRadius = (coneBottom - coneTop) * 0.14f
+            val dashEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 5f), 0f)
+            val arcStroke = Stroke(width = 2f)
+
+            // Right top corner
+            val rightCornerX = cx + topWidth / 2
+            drawLine(
+                color = Color.White.copy(alpha = 0.75f),
+                start = Offset(rightCornerX, coneTop),
+                end = Offset(rightCornerX, coneTop + arcRadius),
+                strokeWidth = 1.5f,
+                pathEffect = dashEffect
+            )
+            drawArc(
+                color = Color.White,
+                startAngle = slantAngleDeg,
+                sweepAngle = arcSweep,
+                useCenter = false,
+                topLeft = Offset(rightCornerX - arcRadius, coneTop - arcRadius),
+                size = Size(arcRadius * 2, arcRadius * 2),
+                style = arcStroke
+            )
+
+            // Left top corner (mirror)
+            val leftCornerX = cx - topWidth / 2
+            drawLine(
+                color = Color.White.copy(alpha = 0.75f),
+                start = Offset(leftCornerX, coneTop),
+                end = Offset(leftCornerX, coneTop + arcRadius),
+                strokeWidth = 1.5f,
+                pathEffect = dashEffect
+            )
+            drawArc(
+                color = Color.White,
+                startAngle = 90f,
+                sweepAngle = arcSweep,
+                useCenter = false,
+                topLeft = Offset(leftCornerX - arcRadius, coneTop - arcRadius),
+                size = Size(arcRadius * 2, arcRadius * 2),
+                style = arcStroke
+            )
+
+            // Angle value at 62% of cone height — absolute value only, no minus sign
+            val absResult = if (result.startsWith("-")) result.drop(1) else result
+            val angleStyle = TextStyle(
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+            val angleText = textMeasurer.measure("$absResult°", angleStyle)
+            val angleY = coneTop + (coneBottom - coneTop) * 0.62f
+            drawText(
+                angleText,
+                topLeft = Offset(
+                    cx - angleText.size.width / 2f,
+                    angleY - angleText.size.height / 2f
+                )
+            )
+        }
     }
 }
 
