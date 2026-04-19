@@ -1,6 +1,7 @@
 package com.peumax.calculatetools.ui.screens
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -15,11 +16,14 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,10 +35,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -50,6 +57,7 @@ import com.peumax.calculatetools.ui.theme.PeumaxNavy
 import com.peumax.calculatetools.ui.theme.TextPrimary
 import com.peumax.calculatetools.viewmodel.CalculatorUiState
 import com.peumax.calculatetools.viewmodel.CalculatorViewModel
+import kotlinx.coroutines.launch
 
 @Composable
 fun CalculatorScreen(viewModel: CalculatorViewModel = hiltViewModel()) {
@@ -59,9 +67,11 @@ fun CalculatorScreen(viewModel: CalculatorViewModel = hiltViewModel()) {
     val d1FocusRequester = remember { FocusRequester() }
     val hFocusRequester = remember { FocusRequester() }
     val d2FocusRequester = remember { FocusRequester() }
+    val snackbarHostState = remember { SnackbarHostState() }
 
     Scaffold(
-        containerColor = BackgroundLight
+        containerColor = BackgroundLight,
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -70,7 +80,13 @@ fun CalculatorScreen(viewModel: CalculatorViewModel = hiltViewModel()) {
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            ResultCard(result = state.result)
+            ResultCard(
+                result = state.result,
+                topDiameter = state.topDiameter,
+                height = state.height,
+                bottomDiameter = state.bottomDiameter,
+                snackbarHostState = snackbarHostState
+            )
             ConeDiagramCard(
                 modifier = Modifier.weight(1f).fillMaxWidth(),
                 topDiameter = state.topDiameter,
@@ -100,9 +116,26 @@ fun CalculatorScreen(viewModel: CalculatorViewModel = hiltViewModel()) {
 }
 
 @Composable
-private fun ResultCard(result: String) {
+private fun ResultCard(
+    result: String,
+    topDiameter: String,
+    height: String,
+    bottomDiameter: String,
+    snackbarHostState: SnackbarHostState
+) {
+    val clipboardManager = LocalClipboardManager.current
+    val scope = rememberCoroutineScope()
+    val hasResult = result.isNotEmpty()
+
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(
+                if (hasResult) Modifier.clickable {
+                    clipboardManager.setText(AnnotatedString("$result°"))
+                    scope.launch { snackbarHostState.showSnackbar("Ângulo copiado") }
+                } else Modifier
+            ),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = PeumaxNavy)
     ) {
@@ -118,6 +151,24 @@ private fun ResultCard(result: String) {
                 fontWeight = FontWeight.Medium,
                 letterSpacing = 2.sp
             )
+            if (hasResult) {
+                Spacer(modifier = Modifier.height(2.dp))
+                val contextParts = buildList {
+                    if (topDiameter.isNotEmpty()) add("D1 $topDiameter")
+                    if (height.isNotEmpty()) add("H $height")
+                    if (bottomDiameter.isNotEmpty()) add("D2 $bottomDiameter")
+                }
+                if (contextParts.isNotEmpty()) {
+                    Text(
+                        text = contextParts.joinToString(" / "),
+                        color = Color.White.copy(alpha = 0.5f),
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Normal,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
             Spacer(modifier = Modifier.height(8.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -125,13 +176,13 @@ private fun ResultCard(result: String) {
                 verticalAlignment = Alignment.Bottom
             ) {
                 Text(
-                    text = if (result.isEmpty()) "—" else result,
-                    color = Color.White,
-                    fontSize = 80.sp,
+                    text = if (hasResult) result else "—",
+                    color = if (hasResult) Color.White else Color.White.copy(alpha = 0.5f),
+                    fontSize = if (hasResult) 80.sp else 48.sp,
                     fontWeight = FontWeight.Black,
                     lineHeight = 80.sp
                 )
-                if (result.isNotEmpty()) {
+                if (hasResult) {
                     Text(
                         text = "°",
                         color = Color.White.copy(alpha = 0.8f),

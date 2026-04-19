@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import java.util.Locale
 import javax.inject.Inject
 
 sealed class CalculatorUiState {
@@ -59,7 +60,7 @@ class CalculatorViewModel @Inject constructor(
 
         if (top != null && top > 0 && bottom != null && bottom > 0 && height != null && height > 0) {
             val angle = calculateAngleUseCase.execute(top, bottom, height)
-            _uiState.update { (it as? CalculatorUiState.Filled)?.copy(result = "%.2f".format(angle)) ?: it }
+            _uiState.update { (it as? CalculatorUiState.Filled)?.copy(result = "%.2f".format(Locale.US, angle)) ?: it }
         } else {
             _uiState.update { (it as? CalculatorUiState.Filled)?.copy(result = "") ?: it }
         }
