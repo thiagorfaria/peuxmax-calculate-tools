@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 667">
+  <rect width="1000" height="667" fill="#0c0d0d"/>
+
+  <path d="M438 143.2 C406.8 143.2 381.6 168.4 381.6 199.6 L381.6 542.4 C381.6 573.6 406.8 598.8 438 598.8 L496 598.8 V143.2 H438 Z" fill="#676a6d" />
+  <path d="M504 143.2 V598.8 L562 598.8 C593.2 598.8 618.4 573.6 618.4 542.4 L618.4 199.6 C618.4 168.4 593.2 143.2 562 143.2 H504 Z" fill="#9fdfab" />
+  <text x="500" y="520" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="80" fill="#9fdfab">Kodiflya</text>
+</svg>
